@@ -3,38 +3,78 @@ require_once "../includes/config.php";
 require_once "../includes/auth.php";
 require_once "../includes/functions.php";
 exigirLogin();
-$bancos = [
- [["texto"=>"Uma escola registrou 10, 20, 30 e 40 livros. Qual é a média?","opcoes"=>["20","25","30","35"],"resposta"=>"25"],["texto"=>"Quatro turmas leram 12, 18, 24 e 30 páginas. Qual é a média?","opcoes"=>["18","20","21","24"],"resposta"=>"21"]],
- [["texto"=>"A tabela registra 3, 5, 5, 7 e 9 ocorrências. Qual é a moda?","opcoes"=>["3","5","7","9"],"resposta"=>"5"],["texto"=>"Os dados são 2, 4, 4, 4, 8 e 10. Qual é a moda?","opcoes"=>["2","4","6","10"],"resposta"=>"4"]],
- [["texto"=>"As pistas são 2, 4, 6, 8 e 10. Qual é a mediana?","opcoes"=>["4","5","6","8"],"resposta"=>"6"],["texto"=>"A sequência ordenada é 5, 7, 9, 11 e 13. Qual é a mediana?","opcoes"=>["7","8","9","11"],"resposta"=>"9"]],
- [["texto"=>"Um gráfico mostra segunda: 6, terça: 9 e quarta: 4. Qual foi o maior valor?","opcoes"=>["4","6","9","19"],"resposta"=>"9"],["texto"=>"As vendas foram 14, 22, 18 e 27 unidades. Qual foi o maior valor?","opcoes"=>["14","18","22","27"],"resposta"=>"27"]],
- [["texto"=>"As notas foram 6, 7, 8 e 9. Qual é a média?","opcoes"=>["6,5","7","7,5","8"],"resposta"=>"7,5"],["texto"=>"As temperaturas foram 18, 21, 24 e 25 graus. Qual é a média?","opcoes"=>["21","22","22,5","23"],"resposta"=>"22"]],
- [["texto"=>"Em uma pesquisa, 18 de 30 alunos escolheram o jogo de dados. Qual é a porcentagem?","opcoes"=>["40%","50%","60%","70%"],"resposta"=>"60%"],["texto"=>"De 80 visitantes, 24 escolheram a sala azul. Qual é a porcentagem?","opcoes"=>["20%","25%","30%","40%"],"resposta"=>"30%"]],
- [["texto"=>"Os tempos foram 12, 15, 15, 18 e 25 minutos. Qual medida representa o valor central?","opcoes"=>["Média","Moda","Mediana","Amplitude"],"resposta"=>"Mediana"],["texto"=>"Para os dados 8, 10, 10, 12 e 40, qual medida evita a influência do valor extremo?","opcoes"=>["Média","Moda","Mediana","Amplitude"],"resposta"=>"Mediana"]],
- [["texto"=>"Uma loja registrou 40, 55, 70 e 85 visitantes. Qual é a amplitude?","opcoes"=>["35","40","45","250"],"resposta"=>"45"],["texto"=>"As pontuações foram 32, 48, 61 e 79. Qual é a amplitude?","opcoes"=>["37","47","48","111"],"resposta"=>"47"]]
-];
+
+function gerarQuestaoDados($numero)
+{
+    $nivel = intdiv($numero - 1, 10) + 1;
+    $ordem = (($numero - 1) % 10) + 1;
+    $base = 8 + ($numero * 3);
+    $xp = 12 + ($nivel * 4);
+    $tema = ($numero - 1) % 7;
+    switch ($tema) {
+        case 0:
+            $valores = [$base, $base + 4 + $ordem, $base + 8 + ($ordem * 2), $base + 12 + ($ordem * 3)];
+            $media = array_sum($valores) / 4;
+            $resposta = fmod($media, 1) === 0.0 ? (string) (int) $media : number_format($media, 1, ",", "");
+            $texto = "Registro {$numero}: uma equipe anotou " . implode(", ", $valores) . " ocorrências. Qual é a média aritmética?";
+            $opcoes = [$resposta, number_format($media + 5, 1, ",", ""), number_format($media - 5, 1, ",", ""), number_format($media + 10, 1, ",", "")];
+            break;
+        case 1:
+            $resposta = (string) ($base + $ordem);
+            $texto = "Tabela {$numero}: os valores observados foram {$resposta}, " . ($base + 2) . ", {$resposta}, " . ($base + 5) . ", {$resposta} e " . ($base + 8) . ". Qual é a moda?";
+            $opcoes = [$resposta, (string) ($base + 1), (string) ($base + 2), (string) ($base + 4)];
+            break;
+        case 2:
+            $centro = $base + $ordem;
+            $valores = [$centro - 9, $centro - 5, $centro - 2, $centro, $centro + 3, $centro + 7, $centro + 11];
+            $resposta = (string) $centro;
+            $texto = "Arquivo {$numero}: a sequência ordenada é " . implode(", ", $valores) . ". Qual é a mediana?";
+            $opcoes = [$resposta, (string) ($centro - 2), (string) ($centro + 3), (string) ($centro + 7)];
+            break;
+        case 3:
+            $menor = 10 + ($numero % 17); $maior = $menor + 18 + $nivel + $ordem;
+            $resposta = (string) ($maior - $menor);
+            $texto = "Gráfico {$numero}: o menor registro foi {$menor} e o maior foi {$maior}. Qual é a amplitude?";
+            $opcoes = [$resposta, (string) ($maior + $menor), (string) ($maior - $menor + 5), (string) ($maior - $menor - 4)];
+            break;
+        case 4:
+            $parte = 20 + (($numero * 7) % 61); $resposta = $parte . "%";
+            $texto = "Pesquisa {$numero}: de 100 participantes, {$parte} escolheram a pista azul. Qual porcentagem isso representa?";
+            $opcoes = [$resposta, ($parte + 5) . "%", max(1, $parte - 10) . "%", min(99, $parte + 12) . "%"];
+            break;
+        case 5:
+            $grupoA = 2 + ($ordem % 4); $grupoB = 3 + ($nivel % 5); $notaA = 4 + ($numero % 6); $notaB = 6 + (($numero + 3) % 5); $notaC = 8 + (($numero + 1) % 4);
+            $media = (($grupoA * $notaA) + ($grupoB * $notaB) + (2 * $notaC)) / ($grupoA + $grupoB + 2);
+            $resposta = fmod($media, 1) === 0.0 ? (string) (int) $media : number_format($media, 1, ",", "");
+            $texto = "Dossiê {$numero}: {$grupoA} alunos tiraram {$notaA}, {$grupoB} alunos tiraram {$notaB} e 2 alunos tiraram {$notaC}. Qual é a média ponderada?";
+            $opcoes = [$resposta, number_format($media + 1, 1, ",", ""), number_format(max(0, $media - 1), 1, ",", ""), number_format($media + 2, 1, ",", "")];
+            break;
+        default:
+            $primeiro = 15 + (($numero * 3) % 40); $segundo = $primeiro + 5 + ($ordem % 6); $terceiro = $segundo + 7 + ($nivel % 5);
+            $resposta = (string) $terceiro;
+            $texto = "Painel {$numero}: um gráfico mostra {$primeiro} visitas na primeira semana, {$segundo} na segunda e {$terceiro} na terceira. Qual semana teve o maior valor?";
+            $opcoes = [$resposta, (string) $primeiro, (string) $segundo, (string) ($terceiro - 3)];
+            break;
+    }
+    return ["texto" => $texto, "opcoes" => array_values(array_unique($opcoes)), "resposta" => $resposta, "nivel" => $nivel, "ordem" => $ordem, "xp" => $xp, "id" => "dados-" . str_pad((string) $numero, 3, "0", STR_PAD_LEFT)];
+}
+
+$questoes = [];
+for ($numero = 1; $numero <= 300; $numero++) { $questoes[] = gerarQuestaoDados($numero); }
 $usuarioAtual = usuarioId();
-$questoesGeradas = $_SESSION["dados_geradas"] ?? [];
-foreach ($questoesGeradas as $nivelGerado => $questaoGerada) { $bancos[$nivelGerado][] = $questaoGerada; }
-$stmtXp = $conn->prepare("SELECT xp FROM usuarios WHERE id = ?");
-$stmtXp->bind_param("i", $usuarioAtual);
-$stmtXp->execute();
-$xpTotal = (int) ($stmtXp->get_result()->fetch_assoc()["xp"] ?? 0);
-$selecionadas = $_SESSION["dados_selecionadas"] ?? null;
-if ($selecionadas === null) { $selecionadas = []; foreach ($bancos as $nivel => $banco) { $opcoes = array_keys($banco); shuffle($opcoes); foreach ($opcoes as $opcao) { if (!questaoJaRespondida($conn, $usuarioAtual, "matematica-{$nivel}-{$opcao}")) { $selecionadas[$nivel] = $opcao; break; } } if (!isset($selecionadas[$nivel])) { $a = rand(4, 18); $b = rand(2, 12); $c = rand(3, 20); $media = number_format(($a + $b + $c) / 3, 1, ",", ""); $questaoGerada = ["texto" => "Um novo registro apresenta {$a}, {$b} e {$c}. Qual é a média?", "opcoes" => [$media, (string) $a, (string) $b, (string) ($c + 1)], "resposta" => $media]; $bancos[$nivel][] = $questaoGerada; $questoesGeradas[$nivel] = $questaoGerada; $_SESSION["dados_geradas"] = $questoesGeradas; $selecionadas[$nivel] = count($bancos[$nivel]) - 1; } } $_SESSION["dados_selecionadas"] = $selecionadas; }
-$dificuldades = ["Fácil", "Fácil", "Médio", "Médio", "Difícil", "Difícil", "Avançado", "Avançado"];
-$questoes = []; foreach ($bancos as $nivel => $banco) { $questoes[] = array_merge($banco[$selecionadas[$nivel]], ["id" => "matematica-{$nivel}-{$selecionadas[$nivel]}", "xp" => 15 + ($nivel * 5), "dificuldade" => $dificuldades[$nivel]]); }
-$indice = (int) ($_SESSION["dados_indice"] ?? 0); $pontos = (int) ($_SESSION["dados_pontos"] ?? 0); $feedback = ""; $tipo = ""; $finalizado = false;
-if (isset($_GET["reiniciar"])) { unset($_SESSION["dados_indice"], $_SESSION["dados_pontos"], $_SESSION["dados_selecionadas"]); header("Location: media.php"); exit; }
+$indice = (int) ($_SESSION["dados_indice"] ?? 0);
+while ($indice < 300 && questaoJaRespondida($conn, $usuarioAtual, $questoes[$indice]["id"])) { $indice++; }
+$pontos = (int) ($_SESSION["dados_pontos"] ?? 0); $feedback = ""; $tipo = "";
+if (isset($_GET["reiniciar"])) { unset($_SESSION["dados_indice"], $_SESSION["dados_pontos"]); header("Location: media.php"); exit; }
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($questoes[$indice])) {
-    if (($_POST["resposta"] ?? "") === $questoes[$indice]["resposta"]) { $xpFase = (int) $questoes[$indice]["xp"]; $pontos += $xpFase; adicionarXP($conn, $usuarioAtual, $xpFase); marcarQuestaoRespondida($conn, $usuarioAtual, $questoes[$indice]["id"], "Detetive dos Dados"); $feedback = "Pista encontrada. Você ganhou {$xpFase} XP."; $tipo = "success"; $indice++; $_SESSION["dados_indice"] = $indice; }
-    else { $feedback = "Essa não é a pista correta. Tente novamente."; $tipo = "error"; }
-    $_SESSION["dados_pontos"] = $pontos;
-    if ($indice >= count($questoes)) { registrarPartida($conn, usuarioId(), "Detetive dos Dados", "Avançado", $pontos, count($questoes), 0, false); $finalizado = true; unset($_SESSION["dados_indice"], $_SESSION["dados_pontos"], $_SESSION["dados_selecionadas"]); }
+    $atual = $questoes[$indice];
+    if (($_POST["resposta"] ?? "") === $atual["resposta"]) {
+        $pontos += $atual["xp"]; adicionarXP($conn, $usuarioAtual, $atual["xp"]); marcarQuestaoRespondida($conn, $usuarioAtual, $atual["id"], "Detetive dos Dados"); $indice++;
+        $_SESSION["dados_indice"] = $indice; $_SESSION["dados_pontos"] = $pontos; $feedback = "Pista encontrada. Você ganhou {$atual["xp"]} XP."; $tipo = "success";
+    } else { $feedback = "Essa não é a pista correta. Analise os dados novamente.\n" . mensagemMotivacionalErro(); $tipo = "error"; }
 }
 require "../includes/header.php";
 $questao = $questoes[$indice] ?? null;
-echo '<div class="total-score">XP acumulado: ' . $xpTotal . '</div>';
 ?>
-<section class="game-shell detective-shell"><aside class="game-sidebar"><a class="side-brand" href="../index.php">DETETIVE<br><b>DOS DADOS</b></a><a class="side-link active" href="media.php">Investigações</a><a class="side-link" href="palavras.php">Laboratório</a><a class="side-link" href="../ranking.php">Ranking</a><a class="side-link" href="../perfil.php">Perfil</a></aside><main class="game-main"><div class="game-topline"><span>CASO #001 · <?= htmlspecialchars($questao["dificuldade"] ?? "Concluído") ?></span><strong><?= $pontos ?> XP</strong></div><div class="game-title"><span class="section-tag">TRILHA MATEMÁTICA</span><h1>Detetive dos Dados</h1><p>Analise os dados. Encontre a pista. Resolva o caso.</p></div><div class="game-progress-label"><span>PROGRESSO DA INVESTIGAÇÃO</span><b><?= min($indice + 1, count($questoes)) ?> / <?= count($questoes) ?></b></div><div class="case-path"><?php for ($n = 0; $n < count($questoes); $n++): ?><span class="path-node <?= $n < $indice ? "done" : ($n === $indice ? "current" : "") ?>"><?= $n + 1 ?></span><?php if ($n < count($questoes) - 1): ?><i></i><?php endif; ?><?php endfor; ?></div><?php if ($finalizado): ?><section class="case-board result-panel"><span class="result-mark">OK</span><h2>Caso solucionado</h2><p>Todas as pistas foram analisadas.</p><strong class="big-score"><?= $pontos ?> XP</strong><a class="action-button" href="media.php?reiniciar=1">Novo caso</a></section><?php elseif ($questao): ?><section class="case-board"><div class="case-note"><span>CASO:</span><strong>O MISTÉRIO DOS DADOS</strong><p>Pista <?= $indice + 1 ?> de <?= count($questoes) ?><br>Analise os registros para encontrar a resposta.</p></div><div class="evidence-board"><div class="clue-heading"><span>PISTA <?= $indice + 1 ?> / <?= count($questoes) ?></span><span class="difficulty-badge difficulty-<?= strtolower($questao["dificuldade"]) ?>"><?= htmlspecialchars($questao["dificuldade"]) ?></span></div><div class="evidence-chart"><span class="chart-bar bar-1"></span><span class="chart-bar bar-2"></span><span class="chart-bar bar-3"></span><span class="chart-bar bar-4"></span><small>DADOS DA INVESTIGAÇÃO</small></div><h2><?= htmlspecialchars($questao["texto"]) ?></h2><?php if ($feedback): ?><div class="game-feedback <?= $tipo ?>"><?= htmlspecialchars($feedback) ?></div><?php endif; ?><form method="POST" class="answer-grid"><?php foreach ($questao["opcoes"] as $opcao): ?><label><input type="radio" name="resposta" value="<?= htmlspecialchars($opcao) ?>" required><span><?= htmlspecialchars($opcao) ?></span></label><?php endforeach; ?><button class="action-button" type="submit">Enviar resposta</button></form></div><aside class="case-suspects"><strong>SUSPEITOS</strong><div><span class="suspect-avatar">L</span><small>LARA</small></div><div><span class="suspect-avatar">B</span><small>BRUNO</small></div><div><span class="suspect-avatar">F</span><small>FÁBIO</small></div><div><span class="suspect-avatar">A</span><small>ALINE</small></div></aside><aside class="case-annotations"><strong>ANOTAÇÕES</strong><p>• Some todos os valores.</p><p>• Divida pela quantidade.</p><p>• Compare os dados.</p></aside></section><?php endif; ?></main></section>
+<section class="game-shell detective-shell"><aside class="game-sidebar"><a class="side-brand" href="../index.php">DETETIVE<br><b>DOS DADOS</b></a><a class="side-link active" href="media.php">Investigações</a><a class="side-link" href="palavras.php">Laboratório</a><a class="side-link" href="../conteudos.php">Videoaulas</a><a class="side-link" href="../perfil.php">Recompensas</a></aside><main class="game-main"><div class="game-topline"><span>CASO <?= str_pad((string) min($indice + 1, 300), 3, "0", STR_PAD_LEFT) ?> · NÍVEL <?= $questao["nivel"] ?? 30 ?></span><strong><?= $pontos ?> XP</strong></div><div class="game-title"><span class="section-tag">TRILHA MATEMÁTICA · 30 NÍVEIS</span><h1>Detetive dos Dados</h1><p>Analise os dados. Encontre a pista. Resolva o caso.</p></div><div class="game-progress-label"><span>PROGRESSO DA INVESTIGAÇÃO</span><b><?= min($indice + 1, 300) ?> / 300</b></div><div class="case-path case-path-compact"><span class="path-node current">N<?= $questao["nivel"] ?? 30 ?></span><i></i><span class="path-node"><?= $questao["ordem"] ?? 10 ?>/10</span></div><?php if (!$questao): ?><section class="case-board result-panel"><span class="result-mark">OK</span><h2>Todos os 30 níveis concluídos</h2><p>Você solucionou as 300 pistas exclusivas.</p><strong class="big-score"><?= $pontos ?> XP</strong></section><?php else: ?><section class="case-board"><div class="case-note"><span>NÍVEL <?= $questao["nivel"] ?></span><strong>O MISTÉRIO DOS DADOS</strong><p>Questão <?= $indice + 1 ?> de 300<br>A dificuldade aumenta a cada nível.</p></div><div class="evidence-board"><div class="clue-heading"><span>PISTA EXCLUSIVA <?= str_pad((string) ($indice + 1), 3, "0", STR_PAD_LEFT) ?></span><span class="difficulty-badge">XP <?= $questao["xp"] ?></span></div><h2><?= htmlspecialchars($questao["texto"]) ?></h2><form method="post"><div class="answer-grid"><?php foreach ($questao["opcoes"] as $opcao): ?><label><input type="radio" name="resposta" value="<?= htmlspecialchars($opcao) ?>" required><span><?= htmlspecialchars($opcao) ?></span></label><?php endforeach; ?></div><button class="action-button" type="submit">CONFIRMAR PISTA</button></form><?php if ($feedback): ?><div class="game-feedback <?= $tipo ?>"><?= htmlspecialchars($feedback) ?></div><?php endif; ?></div></section><?php endif; ?></main></section>
 <?php require "../includes/footer.php"; ?>
