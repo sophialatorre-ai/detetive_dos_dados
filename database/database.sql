@@ -1,9 +1,3 @@
-CREATE DATABASE IF NOT EXISTS detetive_dados
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-
-USE detetive_dados;
-
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
