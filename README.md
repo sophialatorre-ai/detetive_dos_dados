@@ -18,6 +18,8 @@ Portal educacional gamificado para o Ensino Fundamental II. O aluno escolhe entr
 - Jogo de Língua Portuguesa: Monte seu Robô.
 - Cada partida valida respostas, calcula pontos, registra o histórico e atualiza XP/conquistas.
 - Feedback pós-partida com explicação do conceito trabalhado.
+- Recompensa de memória após uma nova conquista, com fila individual, progresso salvo na sessão e conclusão validada no servidor.
+- Leitura por voz em português brasileiro nas páginas principais, com controles para pausar, retomar e interromper.
 
 ## Roteiro de demonstração
 
@@ -25,7 +27,9 @@ Portal educacional gamificado para o Ensino Fundamental II. O aluno escolhe entr
 2. Abrir a central em **Jogos** e mostrar as duas trilhas.
 3. Resolver uma pista de **Detetive dos Dados** e conferir pontos no dashboard.
 4. Resolver **Monte seu Robô** montando sujeito + verbo + complemento.
-5. Abrir Perfil/Ranking para demonstrar a persistência do progresso.
+5. Conquistar uma medalha para abrir o jogo da memória; atualize a página durante a partida e confirme que o tabuleiro continua do ponto salvo.
+6. Usar **Ler página** para testar a leitura, a pausa, a retomada e a interrupção.
+7. Abrir Perfil/Ranking para demonstrar a persistência do progresso.
 
 ## Papéis sugeridos para a equipe
 

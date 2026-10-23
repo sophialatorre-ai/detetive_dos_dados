@@ -23,7 +23,7 @@ require "includes/header.php";
 				</div>
 			<?php else: ?><p class="empty-state">Nenhum jogador cadastrado ainda.</p><?php endif; ?>
 		</section>
-		<aside class="panel ranking-callout"><span class="callout-icon">★</span><span class="eyebrow">SEU PRÓXIMO OBJETIVO</span><h2>Resolva mais casos.</h2><p>Cada partida concluída aumenta seu XP e aproxima você do topo.</p><a class="btn btn-primary" href="jogos/index.php">Jogar agora <span>→</span></a></aside>
+		<aside class="panel ranking-callout"><span class="callout-icon">META</span><span class="eyebrow">SEU PRÓXIMO OBJETIVO</span><h2>Resolva mais casos.</h2><p>Cada partida concluída aumenta seu XP e aproxima você do topo.</p><a class="btn btn-primary" href="jogos/index.php">Jogar agora</a></aside>
 	</div>
 </section>
 

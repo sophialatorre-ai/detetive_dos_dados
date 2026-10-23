@@ -4,12 +4,14 @@ $host = "localhost";
 $usuario = "root";
 $senha = "";
 $banco = "detetive_dados";
+$porta = 3308;
 
 $conn = new mysqli(
     $host,
     $usuario,
     $senha,
-    $banco
+    $banco,
+    $porta
 );
 
 if ($conn->connect_error) {

@@ -13,6 +13,9 @@ CREATE TABLE usuarios (
     xp INT DEFAULT 0,
     reset_token VARCHAR(64) NULL,
     reset_expira DATETIME NULL,
+    problema_visao TINYINT(1) NOT NULL DEFAULT 0,
+    tamanho_letra TINYINT UNSIGNED NOT NULL DEFAULT 100,
+    foto_perfil VARCHAR(255) NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -53,6 +56,18 @@ CREATE TABLE usuario_conquistas (
         ON DELETE CASCADE,
 
     UNIQUE (usuario_id, conquista_id)
+);
+
+CREATE TABLE memoria_notificacoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    conquista_id INT NOT NULL,
+    criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    concluida_em TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (conquista_id) REFERENCES conquistas(id) ON DELETE CASCADE,
+    UNIQUE (usuario_id, conquista_id),
+    INDEX (usuario_id, concluida_em)
 );
 
 CREATE TABLE questoes_resolvidas (

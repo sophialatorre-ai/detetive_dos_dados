@@ -10,10 +10,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $nome = trim($_POST["nome"] ?? "");
     $email = trim($_POST["email"] ?? "");
     $senha = $_POST["senha"] ?? "";
+    $problemaVisao = $_POST["problema_visao"] ?? "";
 
-    if ($nome === "" || $email === "" || $senha === "") {
+    if ($nome === "" || $email === "" || $senha === "" || !in_array($problemaVisao, ["0", "1"], true)) {
 
-        $mensagem = "Preencha todos os campos.";
+        $mensagem = "Preencha todos os campos e responda à pergunta sobre visão.";
         $tipoMensagem = "erro";
 
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -52,17 +53,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             // Cadastra o usuário
             $sql = "INSERT INTO usuarios
-                    (nome, email, senha, nivel, xp)
-                    VALUES (?, ?, ?, 1, 0)";
+                    (nome, email, senha, nivel, xp, problema_visao, tamanho_letra)
+                    VALUES (?, ?, ?, 1, 0, ?, ?)";
 
             $stmt = $conn->prepare($sql);
-
-            $stmt->bind_param(
-                "sss",
-                $nome,
-                $email,
-                $senhaHash
-            );
+            $visao = (int) $problemaVisao;
+            $tamanhoLetra = $visao ? 120 : 100;
+            $stmt->bind_param("sssii", $nome, $email, $senhaHash, $visao, $tamanhoLetra);
 
             if ($stmt->execute()) {
 
@@ -82,11 +79,13 @@ require "includes/header.php";
 
 ?>
 
-<div class="form-box">
-
-    <div class="form-icon">
-        DETETIVE
-    </div>
+<section class="auth-layout signup-layout">
+<div class="auth-intro">
+    <span class="eyebrow">MENTEPLAY</span>
+    <h1>Crie seu perfil.</h1>
+    <p>Personalize sua experiência e comece a explorar os desafios.</p>
+</div>
+<div class="form-box signup-box">
 
     <h1>Criar conta</h1>
 
@@ -102,7 +101,7 @@ require "includes/header.php";
 
     <?php endif; ?>
 
-    <form method="POST">
+    <form method="POST" class="signup-form">
 
         <label for="nome">
             Nome
@@ -143,6 +142,13 @@ require "includes/header.php";
             required
         >
 
+        <fieldset class="vision-question">
+            <legend>Você tem alguma dificuldade de visão?</legend>
+            <p>Usaremos sua resposta para deixar os textos e elementos maiores. Você poderá ajustar isso no seu perfil.</p>
+            <label><input type="radio" name="problema_visao" value="1" <?= ($_POST["problema_visao"] ?? "") === "1" ? "checked" : "" ?> required> Sim, gostaria de elementos maiores</label>
+            <label><input type="radio" name="problema_visao" value="0" <?= ($_POST["problema_visao"] ?? "") === "0" ? "checked" : "" ?> required> Não</label>
+        </fieldset>
+
         <button type="submit">
             Criar minha conta
         </button>
@@ -155,5 +161,6 @@ require "includes/header.php";
     </p>
 
 </div>
+</section>
 
 <?php require "includes/footer.php"; ?>
