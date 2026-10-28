@@ -14,12 +14,47 @@ jobs:
       - name: Baixar o código do repositório
         uses: actions/checkout@v4
 
-      - name: Substituir variaveis de ambiente no config.php
+      - name: Gerar configuração de produção do banco
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          DB_PORT: ${{ secrets.DB_PORT }}
         run: |
-          sed -i "s/__DB_HOST__/${{ secrets.DB_HOST }}/g" config.php
-          sed -i "s/__DB_NAME__/${{ secrets.DB_NAME }}/g" config.php
-          sed -i "s/__DB_USER__/${{ secrets.DB_USER }}/g" config.php
-          sed -i "s/__DB_PASS__/${{ secrets.DB_PASS }}/g" config.php
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const required = ["DB_HOST", "DB_NAME", "DB_USER", "DB_PASS"];
+          const missing = required.filter((name) => !process.env[name]);
+          if (missing.length > 0) {
+            throw new Error(`Configure os secrets obrigatórios: ${missing.join(", ")}`);
+          }
+
+          const port = process.env.DB_PORT || "3306";
+          if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
+            throw new Error("DB_PORT deve ser um número entre 1 e 65535.");
+          }
+
+          const phpString = (value) =>
+            "'" + value.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+          const config = [
+            "<?php",
+            "return [",
+            `    "host" => ${phpString(process.env.DB_HOST)},`,
+            `    "name" => ${phpString(process.env.DB_NAME)},`,
+            `    "user" => ${phpString(process.env.DB_USER)},`,
+            `    "pass" => ${phpString(process.env.DB_PASS)},`,
+            `    "port" => ${Number(port)},`,
+            "];",
+            "",
+          ].join("\n");
+
+          fs.writeFileSync("includes/db.production.php", config, {
+            encoding: "utf8",
+            mode: 0o600,
+          });
+          NODE
 
       - name: Publicar via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -28,9 +63,13 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
-          server-dir: /htdocs/
+          server-dir: /menteplay.totalh.net/htdocs/
           exclude: |
             **/.git*
             **/.git*/**
             **/.github/**
             **/database/**
+
+      - name: Remover configuração temporária com credenciais
+        if: always()
+        run: rm -f includes/db.production.php

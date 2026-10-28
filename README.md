@@ -45,3 +45,13 @@ Portal educacional gamificado para o Ensino Fundamental II. O aluno escolhe entr
 2. Crie o banco importando `database/database.sql`.
 3. Configure credenciais em `includes/db.php`.
 4. Acesse `http://localhost/detetive-dos-dados/`.
+
+## Publicação via GitHub Actions
+
+O workflow de deploy lê as credenciais do banco pelos secrets do repositório e gera `includes/db.production.php` somente durante a publicação. Esse arquivo não deve ser enviado ao Git.
+
+Configure em **Settings → Secrets and variables → Actions**:
+
+- Banco: `DB_HOST`, `DB_NAME`, `DB_USER` e `DB_PASS`.
+- Opcional: `DB_PORT` (padrão `3306`).
+- FTP: `FTP_SERVER`, `FTP_USERNAME` e `FTP_PASSWORD`.
