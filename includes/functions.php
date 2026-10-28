@@ -51,8 +51,10 @@ function marcarQuestaoRespondida($conn, $usuarioId, $questaoId, $jogo)
     $stmt = $conn->prepare("INSERT IGNORE INTO questoes_resolvidas (usuario_id, questao_id, jogo) VALUES (?, ?, ?)");
     $stmt->bind_param("iss", $usuarioId, $questaoId, $jogo);
     $stmt->execute();
+    $novaQuestao = $stmt->affected_rows > 0;
 
     verificarConquistas($conn, $usuarioId);
+    return $novaQuestao;
 }
 
 function catalogoConquistas()

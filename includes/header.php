@@ -3,8 +3,9 @@
 require_once __DIR__ . "/config.php";
 
 $isGamePage = strpos($_SERVER["SCRIPT_NAME"] ?? "", "/jogos/") !== false;
+$isAdminPage = strpos($_SERVER["SCRIPT_NAME"] ?? "", "/admin/") !== false;
 $isWordsPage = basename($_SERVER["SCRIPT_NAME"] ?? "") === "palavras.php" && $isGamePage;
-$isHomePage = basename($_SERVER["SCRIPT_NAME"] ?? "") === "index.php" && !$isGamePage;
+$isHomePage = basename($_SERVER["SCRIPT_NAME"] ?? "") === "index.php" && !$isGamePage && !$isAdminPage;
 $userAccessibility = null;
 if (isset($_SESSION["usuario_id"])) {
     $accessibilityStmt = $conn->prepare("SELECT problema_visao, tamanho_letra FROM usuarios WHERE id = ?");
@@ -32,6 +33,10 @@ $userFontSize = max(80, min(160, (int) ($userAccessibility["tamanho_letra"] ?? (
 
         <link rel="stylesheet"
             href="<?= APP_BASE_URL ?>/css/style.css?v=<?= (int) filemtime(__DIR__ . "/../css/style.css") ?>">
+        <?php if ($isWordsPage): ?>
+            <link rel="stylesheet"
+                href="<?= APP_BASE_URL ?>/css/words.css?v=<?= (int) filemtime(__DIR__ . "/../css/words.css") ?>">
+        <?php endif; ?>
 
 </head>
 

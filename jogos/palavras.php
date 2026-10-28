@@ -5,24 +5,73 @@ require_once "../includes/functions.php";
 exigirLogin();
 $bancos = [
  [["nome"=>"Prefixo","frase"=>"feliz + in = ?","instrucao"=>"Qual palavra completa a transformação?","opcoes"=>["infeliz","felizmente","infelizmente","felicidade"],"resposta"=>"infeliz"],["nome"=>"Prefixo","frase"=>"possível + im = ?","instrucao"=>"Qual palavra recebe o prefixo negativo?","opcoes"=>["impossível","possibilidade","possivelmente","despossível"],"resposta"=>"impossível"]],
- [["nome"=>"Sufixo","frase"=>"feliz + mente = ?","instrucao"=>"Escolha a palavra formada pelo sufixo.","opcoes"=>["infeliz","felizmente","felicidade","felizão"],"resposta"=>"felizmente"],["nome"=>"Sufixo","frase"=>"rápido + mente = ?","instrucao"=>"Que advérbio é formado pelo sufixo?","opcoes"=>["rapidez","rapidamente","enr rápido","irrapido"],"resposta"=>"rapidamente"]],
+ [["nome"=>"Sufixo","frase"=>"feliz + mente = ?","instrucao"=>"Escolha a palavra formada pelo sufixo.","opcoes"=>["infeliz","felizmente","felicidade","felizão"],"resposta"=>"felizmente"],["nome"=>"Sufixo","frase"=>"rápido + mente = ?","instrucao"=>"Que advérbio é formado pelo sufixo?","opcoes"=>["rapidez","rapidamente","lentamente","irrapido"],"resposta"=>"rapidamente"]],
  [["nome"=>"Derivação","frase"=>"leal + dade = ?","instrucao"=>"Que substantivo nasce dessa base mais o sufixo?","opcoes"=>["lealdade","desleal","lealmente","leitor"],"resposta"=>"lealdade"],["nome"=>"Derivação","frase"=>"real + idade = ?","instrucao"=>"Qual palavra é formada por derivação sufixal?","opcoes"=>["realidade","irreal","realmente","realeza"],"resposta"=>"realidade"]],
  [["nome"=>"Prefixo negativo","frase"=>"feliz + in = ?","instrucao"=>"Use o prefixo que muda o sentido da palavra.","opcoes"=>["infeliz","felizmente","felicidade","refeliz"],"resposta"=>"infeliz"],["nome"=>"Prefixo negativo","frase"=>"legal + i = ?","instrucao"=>"Qual palavra expressa o sentido contrário?","opcoes"=>["ilegal","legalmente","legalidade","relegal"],"resposta"=>"ilegal"]],
- [["nome"=>"Parassíntese","frase"=>"noite + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se noite?","opcoes"=>["anoitecer","noiteiro","desnoite","noturno"],"resposta"=>"anoitecer"],["nome"=>"Parassíntese","frase"=>"triste + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se triste?","opcoes"=>["entristecer","tristeza","tristemente","destriste"],"resposta"=>"entristecer"]],
+ [["nome"=>"Parassíntese","frase"=>"a + noite + ecer = ?","instrucao"=>"Qual verbo indica tornar-se noite?","opcoes"=>["anoitecer","noiteiro","desnoite","noturno"],"resposta"=>"anoitecer"],["nome"=>"Parassíntese","frase"=>"triste + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se triste?","opcoes"=>["entristecer","tristeza","tristemente","destriste"],"resposta"=>"entristecer"]],
  [["nome"=>"Desafio final","frase"=>"feliz → infelizmente","instrucao"=>"Identifique a formação usada.","opcoes"=>["derivação prefixal e sufixal","composição por justaposição","abreviação","onomatopeia"],"resposta"=>"derivação prefixal e sufixal"],["nome"=>"Desafio final","frase"=>"des + leal + dade = ?","instrucao"=>"Qual processo combina prefixo e sufixo?","opcoes"=>["derivação prefixal e sufixal","composição por aglutinação","sigla","redução"],"resposta"=>"derivação prefixal e sufixal"]]
 ];
 $usuarioAtual = usuarioId();
 $questoesGeradas = $_SESSION["palavras_geradas"] ?? [];
-foreach ($questoesGeradas as $nivelGerado => $questaoGerada) { $bancos[$nivelGerado][] = $questaoGerada; }
+if (!is_array($questoesGeradas)) {
+    $questoesGeradas = [];
+}
+foreach ($questoesGeradas as $nivelGerado => $questaoGerada) {
+    if (isset($bancos[$nivelGerado]) && is_array($questaoGerada)) {
+        $bancos[$nivelGerado][] = $questaoGerada;
+    }
+}
 $selecionadas = $_SESSION["palavras_selecionadas"] ?? null;
-if ($selecionadas === null) { $selecionadas = []; foreach ($bancos as $nivel => $banco) { $opcoes = array_keys($banco); shuffle($opcoes); foreach ($opcoes as $opcao) { if (!questaoJaRespondida($conn, $usuarioAtual, "portugues-{$nivel}-{$opcao}")) { $selecionadas[$nivel] = $opcao; break; } } if (!isset($selecionadas[$nivel])) { $variacoes = [["nome"=>"Prefixo","frase"=>"des + fazer = ?","instrucao"=>"Qual palavra é formada pelo prefixo?","opcoes"=>["desfazer","fazermente","refazer","fazedor"],"resposta"=>"desfazer"],["nome"=>"Sufixo","frase"=>"casa + eiro = ?","instrucao"=>"Qual palavra nasce com o sufixo indicado?","opcoes"=>["caseiro","casarão","descasa","casual"],"resposta"=>"caseiro"],["nome"=>"Derivação","frase"=>"pedra + eiro = ?","instrucao"=>"Identifique a palavra derivada.","opcoes"=>["pedreiro","pedregulho","pedraço","pedrinha"],"resposta"=>"pedreiro"],["nome"=>"Prefixo negativo","frase"=>"regular + ir = ?","instrucao"=>"Qual palavra expressa o sentido contrário?","opcoes"=>["irregular","regularidade","regularmente","regulador"],"resposta"=>"irregular"],["nome"=>"Parassíntese","frase"=>"velho + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se velho?","opcoes"=>["envelhecer","velhice","velhamente","desvelho"],"resposta"=>"envelhecer"],["nome"=>"Desafio final","frase"=>"des + leal + dade = ?","instrucao"=>"Qual processo combina prefixo e sufixo?","opcoes"=>["derivação prefixal e sufixal","composição","sigla","redução"],"resposta"=>"derivação prefixal e sufixal"]]; $questaoGerada = $variacoes[$nivel]; $bancos[$nivel][] = $questaoGerada; $questoesGeradas[$nivel] = $questaoGerada; $_SESSION["palavras_geradas"] = $questoesGeradas; $selecionadas[$nivel] = count($bancos[$nivel]) - 1; } } $_SESSION["palavras_selecionadas"] = $selecionadas; }
+$selecaoValida = is_array($selecionadas) && count($selecionadas) === count($bancos);
+if ($selecaoValida) {
+    foreach ($bancos as $nivel => $banco) {
+        if (!isset($selecionadas[$nivel]) || !is_int($selecionadas[$nivel]) || !isset($banco[$selecionadas[$nivel]])) {
+            $selecaoValida = false;
+            break;
+        }
+    }
+}
+if (!$selecaoValida) {
+    $selecionadas = [];
+    foreach ($bancos as $nivel => $banco) {
+        $opcoes = array_keys($banco);
+        shuffle($opcoes);
+        foreach ($opcoes as $opcao) {
+            if (!questaoJaRespondida($conn, $usuarioAtual, "portugues-{$nivel}-{$opcao}")) {
+                $selecionadas[$nivel] = $opcao;
+                break;
+            }
+        }
+        if (!isset($selecionadas[$nivel])) {
+            $variacoes = [
+                ["nome"=>"Prefixo","frase"=>"des + fazer = ?","instrucao"=>"Qual palavra é formada pelo prefixo?","opcoes"=>["desfazer","fazermente","refazer","fazedor"],"resposta"=>"desfazer"],
+                ["nome"=>"Sufixo","frase"=>"casa + eiro = ?","instrucao"=>"Qual palavra nasce com o sufixo indicado?","opcoes"=>["caseiro","casarão","descasa","casual"],"resposta"=>"caseiro"],
+                ["nome"=>"Derivação","frase"=>"pedra + eiro = ?","instrucao"=>"Identifique a palavra derivada.","opcoes"=>["pedreiro","pedregulho","pedraço","pedrinha"],"resposta"=>"pedreiro"],
+                ["nome"=>"Prefixo negativo","frase"=>"regular + ir = ?","instrucao"=>"Qual palavra expressa o sentido contrário?","opcoes"=>["irregular","regularidade","regularmente","regulador"],"resposta"=>"irregular"],
+                ["nome"=>"Parassíntese","frase"=>"velho + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se velho?","opcoes"=>["envelhecer","velhice","velhamente","desvelho"],"resposta"=>"envelhecer"],
+                ["nome"=>"Desafio final","frase"=>"des + leal + dade = ?","instrucao"=>"Qual processo combina prefixo e sufixo?","opcoes"=>["derivação prefixal e sufixal","composição","sigla","redução"],"resposta"=>"derivação prefixal e sufixal"]
+            ];
+            $questaoGerada = $variacoes[$nivel];
+            $bancos[$nivel][] = $questaoGerada;
+            $questoesGeradas[$nivel] = $questaoGerada;
+            $selecionadas[$nivel] = count($bancos[$nivel]) - 1;
+        }
+    }
+    $_SESSION["palavras_geradas"] = $questoesGeradas;
+    $_SESSION["palavras_selecionadas"] = $selecionadas;
+}
 $dificuldades = ["Fácil", "Fácil", "Médio", "Médio", "Difícil", "Avançado"];
 $fases = []; foreach ($bancos as $nivel => $banco) { $fases[] = array_merge($banco[$selecionadas[$nivel]], ["id" => "portugues-{$nivel}-{$selecionadas[$nivel]}", "xp" => 15 + ($nivel * 6), "dificuldade" => $dificuldades[$nivel]]); }
 $fase = (int) ($_SESSION["palavras_fase"] ?? 0);
 $pontos = (int) ($_SESSION["palavras_pontos"] ?? 0);
+$erros = (int) ($_SESSION["palavras_erros"] ?? 0);
 $mensagem = "";
 $classe = "";
 $finalizado = false;
+if (!isset($_SESSION["palavras_token"]) || !is_string($_SESSION["palavras_token"]) || !preg_match('/\A[a-f0-9]{64}\z/', $_SESSION["palavras_token"])) {
+    $_SESSION["palavras_token"] = bin2hex(random_bytes(32));
+}
+$tokenPalavras = $_SESSION["palavras_token"];
 $stmtXp = $conn->prepare("SELECT nome, nivel, xp FROM usuarios WHERE id = ?");
 $stmtXp->bind_param("i", $usuarioAtual);
 $stmtXp->execute();
@@ -35,34 +84,60 @@ if (isset($_GET["reiniciar"])) {
         $_SESSION["palavras_selecionadas"],
         $_SESSION["palavras_feedback"],
         $_SESSION["palavras_finalizado"],
-        $_SESSION["palavras_finalizado_pontos"]
+        $_SESSION["palavras_finalizado_pontos"],
+        $_SESSION["palavras_erros"],
+        $_SESSION["palavras_token"]
     );
     header("Location: palavras.php");
     exit;
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($fases[$fase])) {
-    if (($_POST["resposta"] ?? "") === $fases[$fase]["resposta"]) {
-        $xpFase = (int) $fases[$fase]["xp"];
-        $pontos += $xpFase;
-        adicionarXP($conn, $usuarioAtual, $xpFase);
-        marcarQuestaoRespondida($conn, $usuarioAtual, $fases[$fase]["id"], "Laboratório das Palavras");
+    $tokenRecebido = $_POST["csrf_token"] ?? "";
+    $questaoRecebida = $_POST["questao_id"] ?? "";
+    if (
+        !is_string($tokenRecebido)
+        || !hash_equals($tokenPalavras, $tokenRecebido)
+        || !is_string($questaoRecebida)
+        || $questaoRecebida !== $fases[$fase]["id"]
+    ) {
+        $mensagem = "Esta resposta já foi processada ou a página ficou desatualizada. Confira a etapa atual e tente novamente.";
+        $classe = "error";
+    } elseif (($_POST["resposta"] ?? "") === $fases[$fase]["resposta"]) {
+        $conn->begin_transaction();
+        try {
+            $novaQuestao = marcarQuestaoRespondida($conn, $usuarioAtual, $fases[$fase]["id"], "Laboratório das Palavras");
+            if ($novaQuestao) {
+                $xpFase = (int) $fases[$fase]["xp"];
+                adicionarXP($conn, $usuarioAtual, $xpFase);
+                $pontos += $xpFase;
+                $mensagem = "Mistura correta. Você ganhou {$xpFase} XP.";
+            } else {
+                $mensagem = "Resposta correta! Esta questão já havia sido respondida e não concedeu XP novamente.";
+            }
+            $conn->commit();
+        } catch (mysqli_sql_exception $erroBanco) {
+            $conn->rollback();
+            throw $erroBanco;
+        }
         $fase++;
         $_SESSION["palavras_fase"] = $fase;
-        $mensagem = "Mistura correta. Você ganhou {$xpFase} XP.";
         $classe = "success";
     } else {
         $mensagem = "Essa combinação ainda não forma a palavra certa.";
         $classe = "error";
+        $erros++;
     }
 
     $_SESSION["palavras_pontos"] = $pontos;
+    $_SESSION["palavras_erros"] = $erros;
+    $_SESSION["palavras_token"] = bin2hex(random_bytes(32));
     if ($fase >= count($fases)) {
-        registrarPartida($conn, $usuarioAtual, "Laboratório das Palavras", "Avançado", $pontos, count($fases), 0, false);
+        registrarPartida($conn, $usuarioAtual, "Laboratório das Palavras", "Avançado", $pontos, count($fases), $erros, false);
         $finalizado = true;
         $_SESSION["palavras_finalizado"] = true;
         $_SESSION["palavras_finalizado_pontos"] = $pontos;
-        unset($_SESSION["palavras_fase"], $_SESSION["palavras_pontos"], $_SESSION["palavras_selecionadas"]);
+        unset($_SESSION["palavras_fase"], $_SESSION["palavras_pontos"], $_SESSION["palavras_erros"], $_SESSION["palavras_selecionadas"]);
     }
 
     $_SESSION["palavras_feedback"] = ["mensagem" => $mensagem, "classe" => $classe];
@@ -77,13 +152,14 @@ $finalizado = (bool) ($_SESSION["palavras_finalizado"] ?? false);
 if ($finalizado) {
     $pontos = (int) ($_SESSION["palavras_finalizado_pontos"] ?? 0);
 }
-unset($_SESSION["palavras_feedback"], $_SESSION["palavras_finalizado"], $_SESSION["palavras_finalizado_pontos"]);
+unset($_SESSION["palavras_feedback"]);
 
 $questao = $fases[$fase] ?? null;
 $totalFases = count($fases);
 $fase = $finalizado ? $totalFases : $fase;
 $etapaAtual = min($fase + 1, max(1, $totalFases));
 $progressoExperimento = $totalFases > 0 ? min(100, ($fase / $totalFases) * 100) : 0;
+require "../includes/header.php";
 ?>
 <div class="words-app">
     <aside class="words-sidebar">
@@ -146,13 +222,18 @@ $progressoExperimento = $totalFases > 0 ? min(100, ($fase / $totalFases) * 100) 
                     <div class="words-question-heading"><strong>Nível <?= (int) ($aluno["nivel"] ?? 1) ?> · Etapa <?= $etapaAtual ?></strong><span class="words-question-xp">XP <?= (int) $questao["xp"] ?></span></div>
                     <div class="words-clue"><h2><?= htmlspecialchars($questao["frase"], ENT_QUOTES, "UTF-8") ?></h2></div>
                     <p class="words-instruction"><?= htmlspecialchars($questao["instrucao"], ENT_QUOTES, "UTF-8") ?></p>
-                    <?php if ($mensagem): ?><div class="stage-feedback <?= htmlspecialchars($classe, ENT_QUOTES, "UTF-8") ?>" role="status"><?= htmlspecialchars($mensagem, ENT_QUOTES, "UTF-8") ?></div><?php endif; ?>
+                    <?php if ($mensagem): ?><div class="words-stage-feedback <?= htmlspecialchars($classe, ENT_QUOTES, "UTF-8") ?>" role="<?= $classe === "error" ? "alert" : "status" ?>" aria-live="<?= $classe === "error" ? "assertive" : "polite" ?>"><?= htmlspecialchars($mensagem, ENT_QUOTES, "UTF-8") ?></div><?php endif; ?>
                     <form method="POST" class="words-answer-form">
-                        <div class="words-answer-grid">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($tokenPalavras, ENT_QUOTES, "UTF-8") ?>">
+                        <input type="hidden" name="questao_id" value="<?= htmlspecialchars($questao["id"], ENT_QUOTES, "UTF-8") ?>">
+                        <fieldset class="words-answer-fieldset">
+                            <legend class="words-visually-hidden">Selecione uma resposta</legend>
+                            <div class="words-answer-grid">
                             <?php foreach ($questao["opcoes"] as $opcao): ?>
                                 <label><input type="radio" name="resposta" value="<?= htmlspecialchars($opcao, ENT_QUOTES, "UTF-8") ?>" required><span><?= htmlspecialchars($opcao, ENT_QUOTES, "UTF-8") ?></span></label>
                             <?php endforeach; ?>
-                        </div>
+                            </div>
+                        </fieldset>
                         <button class="words-submit" type="submit">Confirmar resposta</button>
                     </form>
                 <?php else: ?>

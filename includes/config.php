@@ -23,7 +23,7 @@ $conn->query("UPDATE conquistas SET icone = 'MEDALHA' WHERE icone NOT IN ('MEDAL
 define("SITE_NAME", "MentePlay");
 
 $scriptDirectory = str_replace("\\", "/", dirname($_SERVER["SCRIPT_NAME"] ?? "/"));
-$baseUrl = preg_replace("#/jogos$#", "", $scriptDirectory);
+$baseUrl = preg_replace("#/(?:admin|jogos)$#", "", $scriptDirectory);
 define("APP_BASE_URL", $baseUrl === "/" ? "" : rtrim($baseUrl, "/"));
 
 ?>
