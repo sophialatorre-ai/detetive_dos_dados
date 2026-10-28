@@ -332,6 +332,10 @@ $progresso = $xpAtual;
 
                 <div class="achievement-card">
 
+                    <div class="achievement-icon">
+                        <?= htmlspecialchars($conquista["icone"]) ?>
+                    </div>
+
                     <div>
 
                         <h3>
@@ -343,8 +347,6 @@ $progresso = $xpAtual;
                         </p>
 
                     </div>
-
-                    <div class="achievement-medal" aria-hidden="true">🏅</div>
 
                 </div>
 

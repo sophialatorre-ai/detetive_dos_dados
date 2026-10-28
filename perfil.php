@@ -1,10 +1,113 @@
 <?php
+
 require_once "includes/config.php";
 require_once "includes/auth.php";
+
 exigirLogin();
 
 $usuarioId = (int) $_SESSION["usuario_id"];
-$stmt = $conn->prepare("SELECT nome, email, nivel, xp, xp_total, criado_em, problema_visao, tamanho_letra, foto_perfil FROM usuarios WHERE id = ?");
+$_SESSION["profile_csrf"] ??= bin2hex(random_bytes(32));
+$mensagem = $_SESSION["profile_message"] ?? "";
+$tipoMensagem = $_SESSION["profile_message_type"] ?? "success";
+unset($_SESSION["profile_message"], $_SESSION["profile_message_type"]);
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $csrf = $_POST["csrf_token"] ?? "";
+
+    if (!is_string($csrf) || !hash_equals($_SESSION["profile_csrf"], $csrf)) {
+        http_response_code(403);
+        $mensagem = "A sessão expirou. Atualize a página e tente novamente.";
+        $tipoMensagem = "erro";
+    } elseif (($_POST["action"] ?? "") === "save_accessibility") {
+        $vision = $_POST["problema_visao"] ?? "";
+        $fontSize = filter_input(INPUT_POST, "tamanho_letra", FILTER_VALIDATE_INT);
+
+        if (!in_array($vision, ["0", "1"], true) || $fontSize === false || !in_array($fontSize, [80, 90, 100, 110, 120, 130, 140, 150, 160], true)) {
+            $mensagem = "Escolha uma opção de visão e um tamanho de letra válido.";
+            $tipoMensagem = "erro";
+        } else {
+            $stmt = $conn->prepare("UPDATE usuarios SET problema_visao = ?, tamanho_letra = ? WHERE id = ?");
+            $visionValue = (int) $vision;
+            $stmt->bind_param("iii", $visionValue, $fontSize, $usuarioId);
+            $stmt->execute();
+            $_SESSION["profile_message"] = "Preferências de acessibilidade atualizadas.";
+            $_SESSION["profile_message_type"] = "success";
+            header("Location: perfil.php");
+            exit;
+        }
+    } elseif (($_POST["action"] ?? "") === "upload_photo") {
+        $file = $_FILES["foto_perfil"] ?? null;
+        $allowedTypes = [
+            "image/jpeg" => "jpg",
+            "image/png" => "png",
+            "image/webp" => "webp"
+        ];
+
+        if (!$file || $file["error"] !== UPLOAD_ERR_OK) {
+            $mensagem = "Selecione uma foto válida para enviar.";
+            $tipoMensagem = "erro";
+        } elseif ($file["size"] > 3 * 1024 * 1024) {
+            $mensagem = "A foto deve ter no máximo 3 MB.";
+            $tipoMensagem = "erro";
+        } else {
+            $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $fileInfo->file($file["tmp_name"]);
+            $imageSize = @getimagesize($file["tmp_name"]);
+
+            if (!isset($allowedTypes[$mimeType]) || !$imageSize || $imageSize[0] > 4000 || $imageSize[1] > 4000) {
+                $mensagem = "Use uma imagem JPG, PNG ou WEBP com até 4000 × 4000 pixels.";
+                $tipoMensagem = "erro";
+            } else {
+                $uploadDirectory = __DIR__ . "/assets/uploads/profiles";
+                if (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0750, true) && !is_dir($uploadDirectory)) {
+                    $mensagem = "Não foi possível preparar o armazenamento da foto.";
+                    $tipoMensagem = "erro";
+                } else {
+                    $filename = bin2hex(random_bytes(16)) . "." . $allowedTypes[$mimeType];
+                    $destination = $uploadDirectory . "/" . $filename;
+                    $relativePath = "assets/uploads/profiles/" . $filename;
+
+                    if (!move_uploaded_file($file["tmp_name"], $destination)) {
+                        $mensagem = "Não foi possível salvar a foto. Tente novamente.";
+                        $tipoMensagem = "erro";
+                    } else {
+                        try {
+                            $stmt = $conn->prepare("SELECT foto_perfil FROM usuarios WHERE id = ?");
+                            $stmt->bind_param("i", $usuarioId);
+                            $stmt->execute();
+                            $oldPhoto = $stmt->get_result()->fetch_assoc()["foto_perfil"] ?? "";
+
+                            $stmt = $conn->prepare("UPDATE usuarios SET foto_perfil = ? WHERE id = ?");
+                            $stmt->bind_param("si", $relativePath, $usuarioId);
+                            $stmt->execute();
+
+                            if (preg_match("#^assets/uploads/profiles/[a-f0-9]{32}\\.(jpg|png|webp)$#", $oldPhoto) === 1) {
+                                $oldPhotoPath = __DIR__ . "/" . $oldPhoto;
+                                if (is_file($oldPhotoPath)) {
+                                    unlink($oldPhotoPath);
+                                }
+                            }
+
+                            $_SESSION["profile_message"] = "Foto de perfil atualizada.";
+                            $_SESSION["profile_message_type"] = "success";
+                            header("Location: perfil.php");
+                            exit;
+                        } catch (Throwable $exception) {
+                            if (is_file($destination)) {
+                                unlink($destination);
+                            }
+                            error_log("Falha ao atualizar foto de perfil: " . $exception->getMessage());
+                            $mensagem = "Não foi possível atualizar sua foto agora.";
+                            $tipoMensagem = "erro";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+$stmt = $conn->prepare("SELECT nome, email, nivel, xp, criado_em, problema_visao, tamanho_letra, foto_perfil FROM usuarios WHERE id = ?");
 $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
 $usuario = $stmt->get_result()->fetch_assoc() ?? [];
@@ -25,25 +128,15 @@ $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
 $partidas = $stmt->get_result();
 
-$stmt = $conn->prepare("SELECT c.nome, c.descricao, c.icone, uc.conquistado_em FROM conquistas c LEFT JOIN usuario_conquistas uc ON uc.conquista_id = c.id AND uc.usuario_id = ? ORDER BY uc.conquistado_em DESC, c.id ASC");
-$stmt->bind_param("i", $usuarioId);
-$stmt->execute();
-$medalhas = $stmt->get_result();
-$stmt->bind_param("i", $usuarioId);
-$stmt->execute();
-$partidas = $stmt->get_result();
-
 $stmt = $conn->prepare("SELECT c.nome, c.descricao, uc.conquistado_em FROM conquistas c LEFT JOIN usuario_conquistas uc ON uc.conquista_id = c.id AND uc.usuario_id = ? ORDER BY uc.conquistado_em DESC, c.id ASC");
 $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
 $medalhas = $stmt->get_result();
 
 require "includes/header.php";
-$xp = (int) ($usuario["xp"] ?? 0);
-$xpTotal = (int) ($usuario["xp_total"] ?? $xp);
-$nivel = (int) ($usuario["nivel"] ?? 1);
 ?>
-<section class="page-frame profile-page medal-page">
+
+<section class="page-frame profile-page">
     <header class="profile-page-heading">
         <span class="eyebrow">SEU ESPAÇO</span>
         <h1>Perfil e progresso</h1>
@@ -126,7 +219,7 @@ $nivel = (int) ($usuario["nivel"] ?? 1);
         <div class="profile-xp panel">
             <div><span class="eyebrow">PROGRESSO DO NÍVEL <?= (int) ($usuario["nivel"] ?? 1) ?></span><h2><?= $xpAtual ?> <small>XP acumulados</small></h2></div>
             <strong class="xp-next"><?= $xpNoNivel ?>/100</strong>
-            <div class="profile-progress" role="progressbar" aria-label="Progresso até o próximo nível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= $xpNoNivel "><span style="width:<?= $xpNoNivel ?>%"></span></div>
+            <div class="profile-progress" role="progressbar" aria-label="Progresso até o próximo nível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= $xpNoNivel ?>"><span style="width:<?= $xpNoNivel ?>%"></span></div>
             <small class="profile-xp-hint"><?= 100 - $xpNoNivel ?> XP para o próximo nível</small>
         </div>
         <div class="profile-stats">
@@ -172,12 +265,6 @@ $nivel = (int) ($usuario["nivel"] ?? 1);
         <?php else: ?>
             <p class="empty-state">Você ainda não conquistou medalhas. Continue jogando para desbloqueá-las.</p>
         <?php endif; ?>
-    </section>
-
-    <section class="panel medals-panel">
-        <div class="panel-heading"><div><span class="eyebrow">SALA DE HONRA</span><h2>Medalhas e conquistas</h2></div><span><?= $medalhas->num_rows ?> MARCOS</span></div>
-        <p class="medals-intro">Cada medalha registra uma descoberta importante na sua jornada.</p>
-        <div class="medal-grid"><?php while ($conquista = $medalhas->fetch_assoc()): ?><?php $icone = strtoupper((string) $conquista["icone"]); $simbolo = $icone === "VETERANO" ? "★" : ($icone === "DADOS" ? "◆" : "✓"); ?><article class="medal-card"><div class="medal-seal"><span class="medal-icon" aria-hidden="true"><?= $simbolo ?></span><small><?= htmlspecialchars($conquista["icone"]) ?></small></div><div class="medal-copy"><strong><?= htmlspecialchars($conquista["nome"]) ?></strong><p><?= htmlspecialchars($conquista["descricao"]) ?></p></div><span class="medal-ribbon">CONQUISTA</span></article><?php endwhile; ?></div>
     </section>
 </section>
 
