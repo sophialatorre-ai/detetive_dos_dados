@@ -60,11 +60,6 @@ $userFontSize = max(80, min(160, (int) ($userAccessibility["tamanho_letra"] ?? (
             <a class="home-login" href="<?= APP_BASE_URL ?>/perfil.php">Perfil</a><a class="nav-exit" href="<?= APP_BASE_URL ?>/logout.php">Sair</a>
         <?php else: ?>
             <a href="<?= APP_BASE_URL ?>/conteudos.php">Conteúdos</a>
-        <?php endif; ?>
-        <?php else: ?>
-
-        <a href="<?= APP_BASE_URL ?>/conteudos.php">Conteúdos</a>
-
             <a href="<?= APP_BASE_URL ?>/ranking.php">
                 Ranking
             </a>
@@ -74,7 +69,6 @@ $userFontSize = max(80, min(160, (int) ($userAccessibility["tamanho_letra"] ?? (
 
             <a class="nav-user" href="<?= APP_BASE_URL ?>/perfil.php"><?= htmlspecialchars($_SESSION["usuario_nome"] ?? "Perfil") ?></a>
             <a class="nav-exit" href="<?= APP_BASE_URL ?>/logout.php" aria-label="Sair">Sair</a>
-
         <?php endif; ?>
 
     </nav>

@@ -50,36 +50,6 @@ function gerarQuestaoPalavras($numero)
     return ["nome" => "Nível {$nivel} · Etapa {$ordem}", "frase" => $texto, "instrucao" => "Escolha a alternativa correta.", "opcoes" => array_values(array_unique($opcoes)), "resposta" => $resposta, "nivel" => $nivel, "ordem" => $ordem, "xp" => $xp, "id" => "palavras-" . str_pad((string) $numero, 3, "0", STR_PAD_LEFT)];
 }
 
-$bancos = [
- [["nome"=>"Prefixo","frase"=>"feliz + in = ?","instrucao"=>"Qual palavra completa a transformação?","opcoes"=>["infeliz","felizmente","infelizmente","felicidade"],"resposta"=>"infeliz"],["nome"=>"Prefixo","frase"=>"possível + im = ?","instrucao"=>"Qual palavra recebe o prefixo negativo?","opcoes"=>["impossível","possibilidade","possivelmente","despossível"],"resposta"=>"impossível"]],
- [["nome"=>"Sufixo","frase"=>"feliz + mente = ?","instrucao"=>"Escolha a palavra formada pelo sufixo.","opcoes"=>["infeliz","felizmente","felicidade","felizão"],"resposta"=>"felizmente"],["nome"=>"Sufixo","frase"=>"rápido + mente = ?","instrucao"=>"Que advérbio é formado pelo sufixo?","opcoes"=>["rapidez","rapidamente","enr rápido","irrapido"],"resposta"=>"rapidamente"]],
- [["nome"=>"Derivação","frase"=>"leal + dade = ?","instrucao"=>"Que substantivo nasce dessa base mais o sufixo?","opcoes"=>["lealdade","desleal","lealmente","leitor"],"resposta"=>"lealdade"],["nome"=>"Derivação","frase"=>"real + idade = ?","instrucao"=>"Qual palavra é formada por derivação sufixal?","opcoes"=>["realidade","irreal","realmente","realeza"],"resposta"=>"realidade"]],
- [["nome"=>"Prefixo negativo","frase"=>"feliz + in = ?","instrucao"=>"Use o prefixo que muda o sentido da palavra.","opcoes"=>["infeliz","felizmente","felicidade","refeliz"],"resposta"=>"infeliz"],["nome"=>"Prefixo negativo","frase"=>"legal + i = ?","instrucao"=>"Qual palavra expressa o sentido contrário?","opcoes"=>["ilegal","legalmente","legalidade","relegal"],"resposta"=>"ilegal"]],
- [["nome"=>"Parassíntese","frase"=>"noite + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se noite?","opcoes"=>["anoitecer","noiteiro","desnoite","noturno"],"resposta"=>"anoitecer"],["nome"=>"Parassíntese","frase"=>"triste + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se triste?","opcoes"=>["entristecer","tristeza","tristemente","destriste"],"resposta"=>"entristecer"]],
- [["nome"=>"Desafio final","frase"=>"feliz → infelizmente","instrucao"=>"Identifique a formação usada.","opcoes"=>["derivação prefixal e sufixal","composição por justaposição","abreviação","onomatopeia"],"resposta"=>"derivação prefixal e sufixal"],["nome"=>"Desafio final","frase"=>"des + leal + dade = ?","instrucao"=>"Qual processo combina prefixo e sufixo?","opcoes"=>["derivação prefixal e sufixal","composição por aglutinação","sigla","redução"],"resposta"=>"derivação prefixal e sufixal"]]
-];
-$usuarioAtual = usuarioId();
-$questoesGeradas = $_SESSION["palavras_geradas"] ?? [];
-foreach ($questoesGeradas as $nivelGerado => $questaoGerada) { $bancos[$nivelGerado][] = $questaoGerada; }
-$selecionadas = $_SESSION["palavras_selecionadas"] ?? null;
-if ($selecionadas === null) { $selecionadas = []; foreach ($bancos as $nivel => $banco) { $opcoes = array_keys($banco); shuffle($opcoes); foreach ($opcoes as $opcao) { if (!questaoJaRespondida($conn, $usuarioAtual, "portugues-{$nivel}-{$opcao}")) { $selecionadas[$nivel] = $opcao; break; } } if (!isset($selecionadas[$nivel])) { $variacoes = [["nome"=>"Prefixo","frase"=>"des + fazer = ?","instrucao"=>"Qual palavra é formada pelo prefixo?","opcoes"=>["desfazer","fazermente","refazer","fazedor"],"resposta"=>"desfazer"],["nome"=>"Sufixo","frase"=>"casa + eiro = ?","instrucao"=>"Qual palavra nasce com o sufixo indicado?","opcoes"=>["caseiro","casarão","descasa","casual"],"resposta"=>"caseiro"],["nome"=>"Derivação","frase"=>"pedra + eiro = ?","instrucao"=>"Identifique a palavra derivada.","opcoes"=>["pedreiro","pedregulho","pedraço","pedrinha"],"resposta"=>"pedreiro"],["nome"=>"Prefixo negativo","frase"=>"regular + ir = ?","instrucao"=>"Qual palavra expressa o sentido contrário?","opcoes"=>["irregular","regularidade","regularmente","regulador"],"resposta"=>"irregular"],["nome"=>"Parassíntese","frase"=>"velho + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se velho?","opcoes"=>["envelhecer","velhice","velhamente","desvelho"],"resposta"=>"envelhecer"],["nome"=>"Desafio final","frase"=>"des + leal + dade = ?","instrucao"=>"Qual processo combina prefixo e sufixo?","opcoes"=>["derivação prefixal e sufixal","composição","sigla","redução"],"resposta"=>"derivação prefixal e sufixal"]]; $questaoGerada = $variacoes[$nivel]; $bancos[$nivel][] = $questaoGerada; $questoesGeradas[$nivel] = $questaoGerada; $_SESSION["palavras_geradas"] = $questoesGeradas; $selecionadas[$nivel] = count($bancos[$nivel]) - 1; } } $_SESSION["palavras_selecionadas"] = $selecionadas; }
-$dificuldades = ["Fácil", "Fácil", "Médio", "Médio", "Difícil", "Avançado"];
-$fases = []; foreach ($bancos as $nivel => $banco) { $fases[] = array_merge($banco[$selecionadas[$nivel]], ["id" => "portugues-{$nivel}-{$selecionadas[$nivel]}", "xp" => 15 + ($nivel * 6), "dificuldade" => $dificuldades[$nivel]]); }
-$fase = (int) ($_SESSION["palavras_fase"] ?? 0); $pontos = (int) ($_SESSION["palavras_pontos"] ?? 0); $mensagem = ""; $classe = ""; $finalizado = false;
-$stmtXp = $conn->prepare("SELECT nome, nivel, xp FROM usuarios WHERE id = ?");
-$stmtXp->bind_param("i", $usuarioAtual);
-$stmtXp->execute();
-$aluno = $stmtXp->get_result()->fetch_assoc() ?? [];
-$xpTotal = (int) ($aluno["xp"] ?? 0);
-if (isset($_GET["reiniciar"])) { unset($_SESSION["palavras_fase"], $_SESSION["palavras_pontos"], $_SESSION["palavras_selecionadas"]); header("Location: palavras.php"); exit; }
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($fases[$fase])) {
-    if (($_POST["resposta"] ?? "") === $fases[$fase]["resposta"]) { $xpFase = (int) $fases[$fase]["xp"]; $pontos += $xpFase; adicionarXP($conn, $usuarioAtual, $xpFase); marcarQuestaoRespondida($conn, $usuarioAtual, $fases[$fase]["id"], "Laboratório das Palavras"); $fase++; $_SESSION["palavras_fase"] = $fase; $mensagem = "Mistura correta. Você ganhou {$xpFase} XP."; $classe = "success"; }
-    else { $mensagem = "Essa combinação ainda não forma a palavra certa."; $classe = "error"; }
-    $_SESSION["palavras_pontos"] = $pontos;
-    if ($fase >= count($fases)) { registrarPartida($conn, usuarioId(), "Laboratório das Palavras", "Avançado", $pontos, count($fases), 0, false); $finalizado = true; unset($_SESSION["palavras_fase"], $_SESSION["palavras_pontos"], $_SESSION["palavras_selecionadas"]); }
-}
-}
-
 $questoes = [];
 for ($numero = 1; $numero <= 300; $numero++) {
     $questoes[] = gerarQuestaoPalavras($numero);
@@ -123,11 +93,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($questoes[$fase])) {
     }
 }
 
-require "../includes/header.php";
-$questao = $fases[$fase] ?? null;
-$totalFases = count($fases);
+$stmtXp = $conn->prepare("SELECT nome, nivel, xp FROM usuarios WHERE id = ?");
+$stmtXp->bind_param("i", $usuarioAtual);
+$stmtXp->execute();
+$aluno = $stmtXp->get_result()->fetch_assoc() ?? [];
+$xpTotal = (int) ($aluno["xp"] ?? 0);
+$questao = $questoes[$fase] ?? null;
+$totalFases = count($questoes);
 $etapaAtual = min($fase + 1, max(1, $totalFases));
 $progressoExperimento = $totalFases > 0 ? min(100, ($fase / $totalFases) * 100) : 0;
+require "../includes/header.php";
 ?>
 <div class="words-app">
     <aside class="words-sidebar">
@@ -167,7 +142,7 @@ $progressoExperimento = $totalFases > 0 ? min(100, ($fase / $totalFases) * 100) 
                 <div class="words-progress-heading"><span>PROGRESSO DO EXPERIMENTO</span><strong><?= $fase ?> / <?= $totalFases ?></strong></div>
                 <div class="words-progress-row">
                     <span class="words-level-node">N<?= (int) ($aluno["nivel"] ?? 1) ?></span>
-                    <div class="words-progress-track" role="progressbar" aria-label="Progresso do experimento" aria-valuemin="0" aria-valuemax="<?= $totalFases ?>" aria-valuenow="<?= min($fase, $totalFases) "><span style="width:<?= $progressoExperimento ?>%"></span></div>
+                    <div class="words-progress-track" role="progressbar" aria-label="Progresso do experimento" aria-valuemin="0" aria-valuemax="<?= $totalFases ?>" aria-valuenow="<?= min($fase, $totalFases) ?>"><span style="width:<?= $progressoExperimento ?>%"></span></div>
                     <span class="words-stage-node"><?= $finalizado ? $totalFases : $etapaAtual ?>/<?= $totalFases ?></span>
                 </div>
             </div>
