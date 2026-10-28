@@ -50,7 +50,7 @@ Portal educacional gamificado para o Ensino Fundamental II. O aluno escolhe entr
 
 O workflow de deploy lê as credenciais do banco pelos secrets do repositório e gera `includes/db.production.php` somente durante a publicação. Esse arquivo não deve ser enviado ao Git.
 
-Configure em **Settings → Secrets and variables → Actions**:
+Configure secrets de repositório em **Settings → Secrets and variables → Actions → New repository secret** (ou secrets no ambiente GitHub associado ao job):
 
 - Banco: `DB_HOST`, `DB_NAME`, `DB_USER` e `DB_PASS`.
 - Opcional: `DB_PORT` (padrão `3306`).

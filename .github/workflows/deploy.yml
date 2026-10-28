@@ -56,6 +56,24 @@ jobs:
           });
           NODE
 
+      - name: Validar credenciais FTP
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          missing=()
+          for name in FTP_SERVER FTP_USERNAME FTP_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              missing+=("$name")
+            fi
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error title=Secrets FTP ausentes::Configure em Settings > Secrets and variables > Actions: ${missing[*]}"
+            exit 1
+          fi
+
       - name: Publicar via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
