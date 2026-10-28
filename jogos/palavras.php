@@ -18,32 +18,16 @@ $selecionadas = $_SESSION["palavras_selecionadas"] ?? null;
 if ($selecionadas === null) { $selecionadas = []; foreach ($bancos as $nivel => $banco) { $opcoes = array_keys($banco); shuffle($opcoes); foreach ($opcoes as $opcao) { if (!questaoJaRespondida($conn, $usuarioAtual, "portugues-{$nivel}-{$opcao}")) { $selecionadas[$nivel] = $opcao; break; } } if (!isset($selecionadas[$nivel])) { $variacoes = [["nome"=>"Prefixo","frase"=>"des + fazer = ?","instrucao"=>"Qual palavra é formada pelo prefixo?","opcoes"=>["desfazer","fazermente","refazer","fazedor"],"resposta"=>"desfazer"],["nome"=>"Sufixo","frase"=>"casa + eiro = ?","instrucao"=>"Qual palavra nasce com o sufixo indicado?","opcoes"=>["caseiro","casarão","descasa","casual"],"resposta"=>"caseiro"],["nome"=>"Derivação","frase"=>"pedra + eiro = ?","instrucao"=>"Identifique a palavra derivada.","opcoes"=>["pedreiro","pedregulho","pedraço","pedrinha"],"resposta"=>"pedreiro"],["nome"=>"Prefixo negativo","frase"=>"regular + ir = ?","instrucao"=>"Qual palavra expressa o sentido contrário?","opcoes"=>["irregular","regularidade","regularmente","regulador"],"resposta"=>"irregular"],["nome"=>"Parassíntese","frase"=>"velho + en + ecer = ?","instrucao"=>"Qual verbo indica tornar-se velho?","opcoes"=>["envelhecer","velhice","velhamente","desvelho"],"resposta"=>"envelhecer"],["nome"=>"Desafio final","frase"=>"des + leal + dade = ?","instrucao"=>"Qual processo combina prefixo e sufixo?","opcoes"=>["derivação prefixal e sufixal","composição","sigla","redução"],"resposta"=>"derivação prefixal e sufixal"]]; $questaoGerada = $variacoes[$nivel]; $bancos[$nivel][] = $questaoGerada; $questoesGeradas[$nivel] = $questaoGerada; $_SESSION["palavras_geradas"] = $questoesGeradas; $selecionadas[$nivel] = count($bancos[$nivel]) - 1; } } $_SESSION["palavras_selecionadas"] = $selecionadas; }
 $dificuldades = ["Fácil", "Fácil", "Médio", "Médio", "Difícil", "Avançado"];
 $fases = []; foreach ($bancos as $nivel => $banco) { $fases[] = array_merge($banco[$selecionadas[$nivel]], ["id" => "portugues-{$nivel}-{$selecionadas[$nivel]}", "xp" => 15 + ($nivel * 6), "dificuldade" => $dificuldades[$nivel]]); }
-<<<<<<< Updated upstream
-$fase = (int) ($_SESSION["palavras_fase"] ?? 0); $pontos = (int) ($_SESSION["palavras_pontos"] ?? 0); $mensagem = ""; $classe = ""; $finalizado = false;
-=======
 $fase = (int) ($_SESSION["palavras_fase"] ?? 0);
 $pontos = (int) ($_SESSION["palavras_pontos"] ?? 0);
 $mensagem = "";
 $classe = "";
 $finalizado = false;
->>>>>>> Stashed changes
 $stmtXp = $conn->prepare("SELECT nome, nivel, xp FROM usuarios WHERE id = ?");
 $stmtXp->bind_param("i", $usuarioAtual);
 $stmtXp->execute();
 $aluno = $stmtXp->get_result()->fetch_assoc() ?? [];
 $xpTotal = (int) ($aluno["xp"] ?? 0);
-<<<<<<< Updated upstream
-if (isset($_GET["reiniciar"])) { unset($_SESSION["palavras_fase"], $_SESSION["palavras_pontos"], $_SESSION["palavras_selecionadas"]); header("Location: palavras.php"); exit; }
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($fases[$fase])) {
-    if (($_POST["resposta"] ?? "") === $fases[$fase]["resposta"]) { $xpFase = (int) $fases[$fase]["xp"]; $pontos += $xpFase; adicionarXP($conn, $usuarioAtual, $xpFase); marcarQuestaoRespondida($conn, $usuarioAtual, $fases[$fase]["id"], "Laboratório das Palavras"); $fase++; $_SESSION["palavras_fase"] = $fase; $mensagem = "Mistura correta. Você ganhou {$xpFase} XP."; $classe = "success"; }
-    else { $mensagem = "Essa combinação ainda não forma a palavra certa."; $classe = "error"; }
-    $_SESSION["palavras_pontos"] = $pontos;
-    if ($fase >= count($fases)) { registrarPartida($conn, usuarioId(), "Laboratório das Palavras", "Avançado", $pontos, count($fases), 0, false); $finalizado = true; unset($_SESSION["palavras_fase"], $_SESSION["palavras_pontos"], $_SESSION["palavras_selecionadas"]); }
-}
-require "../includes/header.php";
-$questao = $fases[$fase] ?? null;
-$totalFases = count($fases);
-=======
 if (isset($_GET["reiniciar"])) {
     unset(
         $_SESSION["palavras_fase"],
@@ -98,7 +82,6 @@ unset($_SESSION["palavras_feedback"], $_SESSION["palavras_finalizado"], $_SESSIO
 $questao = $fases[$fase] ?? null;
 $totalFases = count($fases);
 $fase = $finalizado ? $totalFases : $fase;
->>>>>>> Stashed changes
 $etapaAtual = min($fase + 1, max(1, $totalFases));
 $progressoExperimento = $totalFases > 0 ? min(100, ($fase / $totalFases) * 100) : 0;
 ?>
